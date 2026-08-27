@@ -1,0 +1,9 @@
+environment: prod
+
+platform_name: Android
+device_name: emulator-5554
+automation_name: UiAutomator2
+server_url: http://127.0.0.1:4723
+app_package: io.appium.android.apis
+app_activity: .ApiDemos
+new_command_timeout: 120

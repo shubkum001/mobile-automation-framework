@@ -1,0 +1,8 @@
+environment: qa
+platform_name: iOS
+device_name: iPhone 16
+automation_name: XCUITest
+server_url: http://127.0.0.1:4723
+app_package: com.example.myapp
+app_activity: ""
+new_command_timeout: 120

@@ -1,0 +1,20 @@
+[
+    {
+        "test_case": "valid_login",
+        "username": "standard_user",
+        "password": "secret_sauce",
+        "expected_result": "success"
+    },
+    {
+        "test_case": "invalid_password",
+        "username": "standard_user",
+        "password": "wrong_password",
+        "expected_result": "failure"
+    },
+    {
+        "test_case": "invalid_username",
+        "username": "wrong_user",
+        "password": "secret_sauce",
+        "expected_result": "failure"
+    }
+]
