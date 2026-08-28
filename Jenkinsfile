@@ -75,58 +75,57 @@ pipeline {
 
         stage('Start Android Emulator') {
 
-            steps {
+    steps {
 
-                bat '''
-                    echo ===== Starting Android Emulator =====
+        bat '''
+            echo ===== Jenkins User =====
+            whoami
 
-                    adb start-server
+            echo.
+            echo ===== USERPROFILE =====
+            echo USERPROFILE=%USERPROFILE%
 
-                    if not exist "%ANDROID_AVD_HOME%\\%AVD_NAME%.avd" (
-                        echo ERROR: AVD not found:
-                        echo %ANDROID_AVD_HOME%\\%AVD_NAME%.avd
-                        exit /b 1
-                    )
+            echo.
+            echo ===== ANDROID VARIABLES =====
+            echo ANDROID_HOME=%ANDROID_HOME%
+            echo ANDROID_SDK_ROOT=%ANDROID_SDK_ROOT%
+            echo ANDROID_AVD_HOME=%ANDROID_AVD_HOME%
+            echo AVD_NAME=%AVD_NAME%
 
-                    start "Android Emulator" /B emulator.exe ^
-                        -avd %AVD_NAME% ^
-                        -no-window ^
-                        -no-audio ^
-                        -no-boot-anim
+            echo.
+            echo ===== AVD DIRECTORY =====
+            dir "%ANDROID_AVD_HOME%"
 
-                    echo Emulator process started.
-                '''
+            echo.
+            echo ===== AVD CONFIG =====
+            dir "%ANDROID_AVD_HOME%\\%AVD_NAME%.avd"
 
-                timeout(time: 3, unit: 'MINUTES') {
+            echo.
+            echo ===== Starting Emulator =====
 
-                    waitUntil {
+            adb start-server
 
-                        script {
+            start "Android Emulator" /B emulator.exe ^
+                -avd %AVD_NAME% ^
+                -no-window ^
+                -no-audio ^
+                -no-boot-anim ^
+                -no-snapshot
 
-                            def result = bat(
-                                script: '''
-                                    adb devices | findstr /R /C:"emulator-5554.*device"
-                                ''',
-                                returnStatus: true
-                            )
+            echo Emulator process started.
 
-                            if (result == 0) {
+            timeout /t 15 /nobreak
 
-                                echo "Android emulator is connected."
+            echo.
+            echo ===== Emulator Processes =====
+            tasklist | findstr /I "emulator"
 
-                                return true
-                            }
-
-                            echo "Waiting for Android emulator..."
-
-                            sleep 5
-
-                            return false
-                        }
-                    }
-                }
-            }
-        }
+            echo.
+            echo ===== ADB Devices =====
+            adb devices
+        '''
+    }
+}
 
         stage('Verify Android Device') {
 
