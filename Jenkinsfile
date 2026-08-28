@@ -2,6 +2,10 @@ pipeline {
 
     agent any
 
+    environment {
+        PATH = "C:\\Program Files\\nodejs;C:\\Users\\shubh\\AppData\\Roaming\\npm;${env.PATH}"
+    }
+
     parameters {
 
         choice(
@@ -23,129 +27,12 @@ pipeline {
         )
     }
 
-    environment {
-
-        PATH = "C:\\Program Files\\nodejs;C:\\Users\\shubh\\AppData\\Roaming\\npm;C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk\\platform-tools;C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk\\emulator;${env.PATH}"
-
-        ANDROID_HOME = "C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk"
-
-        ANDROID_SDK_ROOT = "C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk"
-
-        ANDROID_AVD_HOME = "C:\\Users\\shubh\\.android\\avd"
-
-        AVD_NAME = "Pixel_8"
-    }
-
     stages {
 
         stage('Checkout') {
 
             steps {
-
                 checkout scm
-            }
-        }
-
-        stage('Check Android Environment') {
-
-            steps {
-
-                bat '''
-                    echo ===== Android Environment =====
-                    echo ANDROID_HOME=%ANDROID_HOME%
-                    echo ANDROID_SDK_ROOT=%ANDROID_SDK_ROOT%
-                    echo ANDROID_AVD_HOME=%ANDROID_AVD_HOME%
-
-                    echo.
-                    echo ===== ADB =====
-                    where adb
-                    adb version
-
-                    echo.
-                    echo ===== Emulator =====
-                    where emulator
-                    emulator -list-avds
-
-                    echo.
-                    echo ===== Connected Devices =====
-                    adb devices
-                '''
-            }
-        }
-
-        stage('Start Android Emulator') {
-
-    steps {
-
-        bat '''
-            echo ===== Jenkins User =====
-            whoami
-
-            echo.
-            echo ===== USERPROFILE =====
-            echo USERPROFILE=%USERPROFILE%
-
-            echo.
-            echo ===== ANDROID VARIABLES =====
-            echo ANDROID_HOME=%ANDROID_HOME%
-            echo ANDROID_SDK_ROOT=%ANDROID_SDK_ROOT%
-            echo ANDROID_AVD_HOME=%ANDROID_AVD_HOME%
-            echo AVD_NAME=%AVD_NAME%
-
-            echo.
-            echo ===== AVD DIRECTORY =====
-            dir "%ANDROID_AVD_HOME%"
-
-            echo.
-            echo ===== AVD CONFIG =====
-            dir "%ANDROID_AVD_HOME%\\%AVD_NAME%.avd"
-
-            echo.
-            echo ===== Starting Emulator =====
-
-            adb start-server
-
-            start "Android Emulator" /B emulator.exe ^
-                -avd %AVD_NAME% ^
-                -no-window ^
-                -no-audio ^
-                -no-boot-anim ^
-                -no-snapshot
-
-            echo Emulator process started.
-
-            timeout /t 15 /nobreak
-
-            echo.
-            echo ===== Emulator Processes =====
-            tasklist | findstr /I "emulator"
-
-            echo.
-            echo ===== ADB Devices =====
-            adb devices
-        '''
-    }
-}
-
-        stage('Verify Android Device') {
-
-            steps {
-
-                bat '''
-                    echo ===== Android Device =====
-
-                    adb devices
-
-                    echo.
-                    echo ===== Device State =====
-
-                    adb -s emulator-5554 get-state
-
-                    echo.
-                    echo ===== Boot Completed =====
-
-                    adb -s emulator-5554 shell getprop sys.boot_completed
-                '''
             }
         }
 
@@ -164,8 +51,6 @@ pipeline {
             steps {
 
                 bat '''
-                    echo ===== Starting Appium =====
-
                     start "Appium Server" /B appium.cmd
                 '''
 
@@ -180,18 +65,7 @@ pipeline {
                                 returnStatus: true
                             )
 
-                            if (result == 0) {
-
-                                echo "Appium server is ready."
-
-                                return true
-                            }
-
-                            echo "Waiting for Appium server..."
-
-                            sleep 2
-
-                            return false
+                            return result == 0
                         }
                     }
                 }
