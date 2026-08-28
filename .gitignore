@@ -52,3 +52,6 @@ Thumbs.db
 
 apps/*.apk
 apps/*.ipa
+
+# Environment variables
+.env

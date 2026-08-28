@@ -4,6 +4,7 @@ import yaml
 
 from framework.config.config import MobileConfig
 from framework.config.platform import Platform
+from utils.env_reader import get_env
 
 
 def load_config(environment: str) -> MobileConfig:
@@ -34,6 +35,11 @@ def load_config(environment: str) -> MobileConfig:
             f"Supported platforms: "
             f"{[platform.value for platform in Platform]}"
         ) from exc
+
+    server_url = get_env("APPIUM_SERVER_URL")
+
+    if server_url:
+        data["server_url"] = server_url
 
     return MobileConfig(**data)
 
