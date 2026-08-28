@@ -3,7 +3,11 @@ pipeline {
     agent any
 
      environment {
-        PATH = "C:\\Program Files\\nodejs;C:\\Users\\shubh\\AppData\\Roaming\\npm;${env.PATH}"
+       PATH = "C:\\Program Files\\nodejs;C:\\Users\\shubh\\AppData\\Roaming\\npm;${env.PATH}"
+
+        ANDROID_HOME = "C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk"
+        ANDROID_SDK_ROOT = "C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk"
+        ANDROID_AVD_HOME = "C:\\Users\\shubh\\.android\\avd"
     }
 
     parameters {
@@ -46,11 +50,7 @@ pipeline {
             echo ===== Android Environment =====
             echo ANDROID_HOME=%ANDROID_HOME%
             echo ANDROID_SDK_ROOT=%ANDROID_SDK_ROOT%
-
-            echo.
-            echo ===== ADB =====
-            where adb
-            adb version
+            echo ANDROID_AVD_HOME=%ANDROID_AVD_HOME%
 
             echo.
             echo ===== Emulator =====
