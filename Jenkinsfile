@@ -58,60 +58,17 @@ pipeline {
                 -no-boot-anim
 
             echo Emulator process started.
-        '''
 
-        timeout(time: 180, unit: 'SECONDS') {
+            timeout /t 10 /nobreak
 
-            waitUntil {
+            echo ===== Emulator Processes =====
+            tasklist | findstr /I "emulator"
 
-                script {
-
-                    def result = bat(
-                        script: '''
-                            adb devices | findstr "emulator-5554.*device"
-                        ''',
-                        returnStatus: true
-                    )
-
-                    if (result == 0) {
-                        echo "Android emulator is connected."
-                        return true
-                    }
-
-                    echo "Waiting for Android emulator..."
-                    return false
-                }
-            }
-        }
-
-        timeout(time: 180, unit: 'SECONDS') {
-
-            waitUntil {
-
-                script {
-
-                    def result = bat(
-                        script: '''
-                            adb shell getprop sys.boot_completed | findstr "1"
-                        ''',
-                        returnStatus: true
-                    )
-
-                    if (result == 0) {
-                        echo "Android emulator boot completed."
-                        return true
-                    }
-
-                    echo "Waiting for Android boot completion..."
-                    return false
-                }
-            }
-        }
-
-        bat '''
-            echo ===== Final Emulator Status =====
+            echo ===== ADB Devices =====
             adb devices
-            adb shell getprop sys.boot_completed
+
+            echo ===== ADB Server =====
+            adb get-state
         '''
     }
 }
@@ -126,21 +83,7 @@ pipeline {
             }
         }
 
-        stage('Verify Android Device') {
 
-    steps {
-
-        bat '''
-            echo ===== Verifying Android Device =====
-
-            adb devices
-
-            adb -s emulator-5554 get-state
-
-            adb -s emulator-5554 shell getprop sys.boot_completed
-        '''
-    }
-}
 
         stage('Start Appium') {
 
