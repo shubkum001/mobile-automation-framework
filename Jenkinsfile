@@ -42,14 +42,30 @@ pipeline {
             }
         }
 
-        stage('Start Android Emulator') {
+stage('Start Android Emulator') {
 
     steps {
 
         bat '''
-            echo ===== Starting Android Emulator =====
+            echo ===== Android Environment =====
+
+            set ANDROID_HOME=C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk
+            set ANDROID_SDK_ROOT=C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk
+            set ANDROID_AVD_HOME=C:\\Users\\shubh\\.android\\avd
+            set ANDROID_USER_HOME=C:\\Users\\shubh\\.android
+
+            echo ANDROID_HOME=%ANDROID_HOME%
+            echo ANDROID_SDK_ROOT=%ANDROID_SDK_ROOT%
+            echo ANDROID_AVD_HOME=%ANDROID_AVD_HOME%
+            echo ANDROID_USER_HOME=%ANDROID_USER_HOME%
+
+            echo.
+            echo ===== Starting ADB =====
 
             adb start-server
+
+            echo.
+            echo ===== Starting Android Emulator =====
 
             start "Android Emulator" /B emulator.exe ^
                 -avd Pixel_8 ^
@@ -61,16 +77,23 @@ pipeline {
 
             timeout /t 10 /nobreak
 
+            echo.
             echo ===== Emulator Processes =====
+
             tasklist | findstr /I "emulator"
 
+            echo.
             echo ===== ADB Devices =====
+
             adb devices
 
-            echo ===== ADB Server =====
+            echo.
+            echo ===== ADB State =====
+
             adb get-state
         '''
     }
+}
 }
 
         stage('Install Dependencies') {
