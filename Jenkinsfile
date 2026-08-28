@@ -38,6 +38,32 @@ pipeline {
             }
         }
 
+        stage('Check Android Emulator') {
+
+    steps {
+
+        bat '''
+            echo ===== Android Environment =====
+            echo ANDROID_HOME=%ANDROID_HOME%
+            echo ANDROID_SDK_ROOT=%ANDROID_SDK_ROOT%
+
+            echo.
+            echo ===== ADB =====
+            where adb
+            adb version
+
+            echo.
+            echo ===== Emulator =====
+            where emulator
+            emulator -list-avds
+
+            echo.
+            echo ===== Connected Devices =====
+            adb devices
+        '''
+    }
+}
+
         stage('Install Dependencies') {
 
             steps {
