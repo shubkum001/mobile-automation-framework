@@ -2,17 +2,7 @@ pipeline {
 
     agent any
 
-     environment {
-       PATH = "C:\\Program Files\\nodejs;C:\\Users\\shubh\\AppData\\Roaming\\npm;${env.PATH}"
-
-        ANDROID_HOME = "C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk"
-        ANDROID_SDK_ROOT = "C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk"
-        ANDROID_AVD_HOME = "C:\\Users\\shubh\\.android\\avd"
-    }
-
     parameters {
-
-
 
         choice(
             name: 'ENVIRONMENT',
@@ -33,68 +23,132 @@ pipeline {
         )
     }
 
+    environment {
+
+        PATH = "C:\\Program Files\\nodejs;C:\\Users\\shubh\\AppData\\Roaming\\npm;C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk\\platform-tools;C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk\\emulator;${env.PATH}"
+
+        ANDROID_HOME = "C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk"
+
+        ANDROID_SDK_ROOT = "C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk"
+
+        ANDROID_AVD_HOME = "C:\\Users\\shubh\\.android\\avd"
+
+        AVD_NAME = "Pixel_8"
+    }
+
     stages {
 
         stage('Checkout') {
 
             steps {
+
                 checkout scm
             }
         }
 
-stage('Start Android Emulator') {
+        stage('Check Android Environment') {
 
-    steps {
+            steps {
 
-        bat '''
-            echo ===== Android Environment =====
+                bat '''
+                    echo ===== Android Environment =====
+                    echo ANDROID_HOME=%ANDROID_HOME%
+                    echo ANDROID_SDK_ROOT=%ANDROID_SDK_ROOT%
+                    echo ANDROID_AVD_HOME=%ANDROID_AVD_HOME%
 
-            set ANDROID_HOME=C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk
-            set ANDROID_SDK_ROOT=C:\\Users\\shubh\\AppData\\Local\\Android\\Sdk
-            set ANDROID_AVD_HOME=C:\\Users\\shubh\\.android\\avd
-            set ANDROID_USER_HOME=C:\\Users\\shubh\\.android
+                    echo.
+                    echo ===== ADB =====
+                    where adb
+                    adb version
 
-            echo ANDROID_HOME=%ANDROID_HOME%
-            echo ANDROID_SDK_ROOT=%ANDROID_SDK_ROOT%
-            echo ANDROID_AVD_HOME=%ANDROID_AVD_HOME%
-            echo ANDROID_USER_HOME=%ANDROID_USER_HOME%
+                    echo.
+                    echo ===== Emulator =====
+                    where emulator
+                    emulator -list-avds
 
-            echo.
-            echo ===== Starting ADB =====
+                    echo.
+                    echo ===== Connected Devices =====
+                    adb devices
+                '''
+            }
+        }
 
-            adb start-server
+        stage('Start Android Emulator') {
 
-            echo.
-            echo ===== Starting Android Emulator =====
+            steps {
 
-            start "Android Emulator" /B emulator.exe ^
-                -avd Pixel_8 ^
-                -no-window ^
-                -no-audio ^
-                -no-boot-anim
+                bat '''
+                    echo ===== Starting Android Emulator =====
 
-            echo Emulator process started.
+                    adb start-server
 
-            timeout /t 10 /nobreak
+                    if not exist "%ANDROID_AVD_HOME%\\%AVD_NAME%.avd" (
+                        echo ERROR: AVD not found:
+                        echo %ANDROID_AVD_HOME%\\%AVD_NAME%.avd
+                        exit /b 1
+                    )
 
-            echo.
-            echo ===== Emulator Processes =====
+                    start "Android Emulator" /B emulator.exe ^
+                        -avd %AVD_NAME% ^
+                        -no-window ^
+                        -no-audio ^
+                        -no-boot-anim
 
-            tasklist | findstr /I "emulator"
+                    echo Emulator process started.
+                '''
 
-            echo.
-            echo ===== ADB Devices =====
+                timeout(time: 3, unit: 'MINUTES') {
 
-            adb devices
+                    waitUntil {
 
-            echo.
-            echo ===== ADB State =====
+                        script {
 
-            adb get-state
-        '''
-    }
-}
-}
+                            def result = bat(
+                                script: '''
+                                    adb devices | findstr /R /C:"emulator-5554.*device"
+                                ''',
+                                returnStatus: true
+                            )
+
+                            if (result == 0) {
+
+                                echo "Android emulator is connected."
+
+                                return true
+                            }
+
+                            echo "Waiting for Android emulator..."
+
+                            sleep 5
+
+                            return false
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Verify Android Device') {
+
+            steps {
+
+                bat '''
+                    echo ===== Android Device =====
+
+                    adb devices
+
+                    echo.
+                    echo ===== Device State =====
+
+                    adb -s emulator-5554 get-state
+
+                    echo.
+                    echo ===== Boot Completed =====
+
+                    adb -s emulator-5554 shell getprop sys.boot_completed
+                '''
+            }
+        }
 
         stage('Install Dependencies') {
 
@@ -106,13 +160,13 @@ stage('Start Android Emulator') {
             }
         }
 
-
-
         stage('Start Appium') {
 
             steps {
 
                 bat '''
+                    echo ===== Starting Appium =====
+
                     start "Appium Server" /B appium.cmd
                 '''
 
@@ -127,7 +181,18 @@ stage('Start Android Emulator') {
                                 returnStatus: true
                             )
 
-                            return result == 0
+                            if (result == 0) {
+
+                                echo "Appium server is ready."
+
+                                return true
+                            }
+
+                            echo "Waiting for Appium server..."
+
+                            sleep 2
+
+                            return false
                         }
                     }
                 }
