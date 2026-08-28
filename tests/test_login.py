@@ -6,7 +6,7 @@ from utils.test_data_reader import load_login_test_data
 login_data = load_login_test_data("android")
 
 
-@pytest.mark.regression
+@pytest.mark.smoke
 @pytest.mark.parametrize(
     "data",
     login_data,

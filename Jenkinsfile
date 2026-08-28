@@ -107,24 +107,31 @@ pipeline {
         }
     }
 
-    post {
+post {
 
-        always {
+    always {
 
-            archiveArtifacts(
-                artifacts: 'artifacts/**/*',
-                allowEmptyArchive: true
-            )
-        }
+        allure(
+            results: [
+                [path: 'artifacts/allure-results']
+            ]
+        )
 
-        success {
+        archiveArtifacts(
+            artifacts: 'artifacts/**/*',
+            allowEmptyArchive: true
+        )
+    }
 
-            echo 'Mobile automation execution completed successfully.'
-        }
+    success {
 
-        failure {
+        echo 'Mobile automation execution completed successfully.'
+    }
 
-            echo 'Mobile automation execution failed.'
-        }
+    failure {
+
+        echo 'Mobile automation execution failed.'
+    }
+}
     }
 }
