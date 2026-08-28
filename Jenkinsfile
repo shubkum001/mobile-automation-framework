@@ -42,24 +42,76 @@ pipeline {
             }
         }
 
-        stage('Check Android Emulator') {
+        stage('Start Android Emulator') {
 
     steps {
 
         bat '''
-            echo ===== Android Environment =====
-            echo ANDROID_HOME=%ANDROID_HOME%
-            echo ANDROID_SDK_ROOT=%ANDROID_SDK_ROOT%
-            echo ANDROID_AVD_HOME=%ANDROID_AVD_HOME%
+            echo ===== Starting Android Emulator =====
 
-            echo.
-            echo ===== Emulator =====
-            where emulator
-            emulator -list-avds
+            adb start-server
 
-            echo.
-            echo ===== Connected Devices =====
+            start "Android Emulator" /B emulator.exe ^
+                -avd Pixel_8 ^
+                -no-window ^
+                -no-audio ^
+                -no-boot-anim
+
+            echo Emulator process started.
+        '''
+
+        timeout(time: 180, unit: 'SECONDS') {
+
+            waitUntil {
+
+                script {
+
+                    def result = bat(
+                        script: '''
+                            adb devices | findstr "emulator-5554.*device"
+                        ''',
+                        returnStatus: true
+                    )
+
+                    if (result == 0) {
+                        echo "Android emulator is connected."
+                        return true
+                    }
+
+                    echo "Waiting for Android emulator..."
+                    return false
+                }
+            }
+        }
+
+        timeout(time: 180, unit: 'SECONDS') {
+
+            waitUntil {
+
+                script {
+
+                    def result = bat(
+                        script: '''
+                            adb shell getprop sys.boot_completed | findstr "1"
+                        ''',
+                        returnStatus: true
+                    )
+
+                    if (result == 0) {
+                        echo "Android emulator boot completed."
+                        return true
+                    }
+
+                    echo "Waiting for Android boot completion..."
+                    return false
+                }
+            }
+        }
+
+        bat '''
+            echo ===== Final Emulator Status =====
             adb devices
+            adb shell getprop sys.boot_completed
         '''
     }
 }
@@ -73,6 +125,22 @@ pipeline {
                 bat 'pip install -r requirements.txt'
             }
         }
+
+        stage('Verify Android Device') {
+
+    steps {
+
+        bat '''
+            echo ===== Verifying Android Device =====
+
+            adb devices
+
+            adb -s emulator-5554 get-state
+
+            adb -s emulator-5554 shell getprop sys.boot_completed
+        '''
+    }
+}
 
         stage('Start Appium') {
 
